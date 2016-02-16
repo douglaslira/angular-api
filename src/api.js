@@ -1,8 +1,10 @@
 var buildApi = function (config, http) {
 
+	var listObjects = []; // SYNC
+
 	var createQueryString = function (queryString) {
 		var parameters = [];
-		for(parameter in queryString) {
+		for(var parameter in queryString) {
 			parameters.push(parameter + "=" + queryString[parameter]);
 		}
 		return "?" + parameters.join("&");
@@ -30,24 +32,47 @@ var buildApi = function (config, http) {
 		};
 		resource.save = function (data) {
 			if (options.beforeSave) data = options.beforeSave(data);
+
+			// listObjects.push(data) <- return index; // DRAFT
+
 			return http.post(createUrl(parent, resourceName), data);
+
+			// listObjects[index] <- SYNC
 		};
 		resource.update = function (id, data) {
 			if (options.beforeUpdate) data = options.beforeUpdate(data);
+
+			// listObjects[index] <- SYNCING
+
 			return http.put(createUrl(parent, resourceName, id), data);
+
+			// listObjects[index] = data <- SYNC
+
 		};
 		resource.patch = function (id, data) {
 			if (options.beforePatch) data = options.beforePatch(data);
+
+			// listObjects[index] <- SYNCING
+
 			return http.patch(createUrl(parent, resourceName, id), data);
+
+			// listObjects[index] = data <- SYNC
+
 		};
 		resource.delete = function (id) {
+
+			// listObjects[index] <- REMOVING
+
 			return http.delete(createUrl(parent, resourceName, id));
+
+			// listObjects.splice([index], 1)
+
 		};
 
 		resource.getOperations = function (id) {
 			var url = createUrl(parent, resourceName, id);
 			var operations = {};
-			for(operation in options.operations) {
+			for(var operation in options.operations) {
 				(function (operation) {
 					operations[operation] = function (data) {
 						var method = options.operations[operation].method;
@@ -64,7 +89,7 @@ var buildApi = function (config, http) {
 
 	var createStructure = function (resources, parent) {
 		var structure = {};
-		for(resourceChild in resources) {
+		for(var resourceChild in resources) {
 			structure[resourceChild] = createResource(resourceChild, parent, resources[resourceChild]);
 			if (!resources[resourceChild].resources) continue;
 			(function (resourceChild) {
